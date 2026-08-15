@@ -12,7 +12,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { ArrowUpRight, Plus, TrendingDown, TrendingUp, Wallet, PiggyBank, Receipt } from "lucide-react";
+import { ArrowUpRight, Plus, TrendingDown, TrendingUp, Wallet, PiggyBank, Receipt, Target, Flame } from "lucide-react";
 import { AppShell, PageHeader } from "@/components/spendly/AppShell";
 import { StatCard } from "@/components/spendly/StatCard";
 import { EmptyState } from "@/components/spendly/EmptyState";
@@ -40,13 +40,6 @@ export const Route = createFileRoute("/")({
   }),
   component: Dashboard,
 });
-
-function greeting() {
-  const hour = new Date().getHours();
-  if (hour < 12) return "Good morning";
-  if (hour < 17) return "Good afternoon";
-  return "Good evening";
-}
 
 function ChartCard({
   title,
@@ -83,15 +76,45 @@ function Dashboard() {
   const analytics = analyticsQuery.data;
   const isEmpty = summaryQuery.isSuccess && summary?.transactionCount === 0;
 
+  const savingsRate = summary?.savingsRate ?? 0;
+  const savingsMood =
+    savingsRate >= 40 ? { text: "Excellent!", emoji: "🚀", variant: "income" as const }
+    : savingsRate >= 25 ? { text: "Great work!", emoji: "🌟", variant: "income" as const }
+    : savingsRate >= 15 ? { text: "On track", emoji: "💪", variant: "brand" as const }
+    : savingsRate > 0 ? { text: "Room to improve", emoji: "🎯", variant: "neutral" as const }
+    : { text: "Spending more than you earn", emoji: "⚠️", variant: "expense" as const };
+
+  const today = new Date().toLocaleDateString("en-IN", {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+  });
+
   return (
     <AppShell>
       <PageHeader
-        title={greeting()}
-        subtitle="Here's your financial overview."
+        title="Spendly Dashboard"
+        subtitle={`Track every rupee, grow every month · ${today}`}
         action={
-          <Button onClick={() => setOpen(true)} className="w-full sm:w-auto">
-            <Plus className="h-4 w-4" /> Add Transaction
-          </Button>
+          <div className="flex flex-wrap items-center justify-end gap-2">
+            <Badge
+              variant="outline"
+              className={`gap-1.5 border-2 px-3 py-1.5 text-[11px] ${
+                savingsMood.variant === "income"
+                  ? "border-income/30 bg-income/10 text-income"
+                  : savingsMood.variant === "brand"
+                  ? "border-primary/30 bg-primary/10 text-primary"
+                  : savingsMood.variant === "expense"
+                  ? "border-expense/30 bg-expense/10 text-expense"
+                  : "border-muted-foreground/20 bg-muted text-muted-foreground"
+              }`}
+            >
+              {savingsMood.emoji} <span className="font-semibold">{savingsMood.text}</span>
+            </Badge>
+            <Button onClick={() => setOpen(true)} className="w-full sm:w-auto">
+              <Plus className="h-4 w-4" /> Add Transaction
+            </Button>
+          </div>
         }
       />
 
@@ -167,8 +190,8 @@ function Dashboard() {
                       formatter={(value: number, name: string) => [formatINR(value), name]}
                     />
                     <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: 12 }} />
-                    <Bar dataKey="income" name="Income" fill="#22C55E" radius={[6, 6, 0, 0]} maxBarSize={22} />
-                    <Bar dataKey="expenses" name="Expenses" fill="#F43F5E" radius={[6, 6, 0, 0]} maxBarSize={22} />
+                    <Bar dataKey="income" name="Income" fill="#10B981" radius={[8, 8, 0, 0]} maxBarSize={24} />
+                    <Bar dataKey="expenses" name="Expenses" fill="#EC4899" radius={[8, 8, 0, 0]} maxBarSize={24} />
                   </BarChart>
                 </ResponsiveContainer>
               ) : (
@@ -205,9 +228,12 @@ function Dashboard() {
             </ChartCard>
           </div>
 
-          <section className="card-surface mt-6">
+          <section className="card-surface mt-6 overflow-hidden">
             <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 border-b border-border px-5 py-4">
-              <h2 className="min-w-0 truncate text-base font-semibold text-navy">Recent Transactions</h2>
+              <div>
+                <h2 className="min-w-0 truncate text-base font-semibold text-navy">Recent Transactions</h2>
+                <p className="mt-0.5 text-xs text-muted-foreground">Your latest financial activity</p>
+              </div>
               <Link
                 to="/transactions"
                 className="inline-flex shrink-0 items-center gap-1 text-sm font-medium text-primary hover:underline"

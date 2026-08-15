@@ -132,8 +132,8 @@ function AnalyticsPage() {
                   <AreaChart data={data?.monthly ?? []}>
                     <defs>
                       <linearGradient id="spendFill" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#F43F5E" stopOpacity={0.22} />
-                        <stop offset="100%" stopColor="#F43F5E" stopOpacity={0} />
+                        <stop offset="0%" stopColor="#EC4899" stopOpacity={0.28} />
+                        <stop offset="100%" stopColor="#8B5CF6" stopOpacity={0} />
                       </linearGradient>
                     </defs>
                     <XAxis dataKey="month" tickLine={false} axisLine={false} fontSize={12} stroke="#64748B" />
@@ -149,9 +149,18 @@ function AnalyticsPage() {
                     <Area
                       type="monotone"
                       dataKey="expenses"
-                      stroke="#F43F5E"
-                      strokeWidth={2}
+                      stroke="url(#spendFill)"
+                      strokeWidth={0}
+                      fill="none"
+                    />
+                    <Area
+                      type="monotone"
+                      dataKey="expenses"
+                      stroke="#EC4899"
+                      strokeWidth={2.5}
                       fill="url(#spendFill)"
+                      dot={false}
+                      activeDot={{ r: 5, fill: "#EC4899", stroke: "#fff", strokeWidth: 2 }}
                     />
                   </AreaChart>
                 </ResponsiveContainer>
@@ -180,8 +189,8 @@ function AnalyticsPage() {
                         formatter={(value: number, name: string) => [formatINR(value), name]}
                       />
                       <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: 12 }} />
-                      <Bar dataKey="income" name="Income" fill="#22C55E" radius={[6, 6, 0, 0]} maxBarSize={22} />
-                      <Bar dataKey="expenses" name="Expenses" fill="#F43F5E" radius={[6, 6, 0, 0]} maxBarSize={22} />
+                      <Bar dataKey="income" name="Income" fill="#10B981" radius={[8, 8, 0, 0]} maxBarSize={24} />
+                      <Bar dataKey="expenses" name="Expenses" fill="#EC4899" radius={[8, 8, 0, 0]} maxBarSize={24} />
                     </BarChart>
                   </ResponsiveContainer>
                 )}

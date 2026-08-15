@@ -41,20 +41,20 @@ export const INCOME_CATEGORIES = [
   "Other",
 ] as const;
 
-/** Chart palette: restrained brand + muted complements. */
+/** Chart palette: premium violet + emerald + amber + rose complements. */
 export const CATEGORY_COLORS: Record<string, string> = {
   Food: "#10B981",
-  Travel: "#0F172A",
-  Shopping: "#F43F5E",
-  Bills: "#059669",
-  Entertainment: "#64748B",
+  Travel: "#8B5CF6",
+  Shopping: "#EC4899",
+  Bills: "#F59E0B",
+  Entertainment: "#6366F1",
   Healthcare: "#22C55E",
-  Education: "#334155",
+  Education: "#14B8A6",
   Other: "#94A3B8",
   Salary: "#10B981",
-  Freelance: "#059669",
-  Business: "#0F172A",
-  Investment: "#22C55E",
+  Freelance: "#8B5CF6",
+  Business: "#F59E0B",
+  Investment: "#14B8A6",
 };
 
 export type Summary = {
