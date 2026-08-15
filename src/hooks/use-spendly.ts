@@ -9,7 +9,15 @@ import {
   listTransactions,
   updateTransaction,
 } from "@/lib/spendly.functions";
-import type { RangeKey } from "@/lib/spendly-core";
+import type { RangeKey, TxType } from "@/lib/spendly-core";
+
+export type TransactionPayload = {
+  type: TxType;
+  category: string;
+  amount: number;
+  date: string;
+  description: string | null;
+};
 
 export function useTransactions() {
   const fn = useServerFn(listTransactions);
@@ -43,7 +51,7 @@ export function useCreateTransaction() {
   const fn = useServerFn(createTransaction);
   const invalidate = useInvalidate();
   return useMutation({
-    mutationFn: (data: Parameters<typeof createTransaction>[0]["data"]) => fn({ data }),
+    mutationFn: (data: TransactionPayload) => fn({ data }),
     onSuccess: invalidate,
   });
 }
@@ -52,7 +60,7 @@ export function useUpdateTransaction() {
   const fn = useServerFn(updateTransaction);
   const invalidate = useInvalidate();
   return useMutation({
-    mutationFn: (data: Parameters<typeof updateTransaction>[0]["data"]) => fn({ data }),
+    mutationFn: (data: TransactionPayload & { id: string }) => fn({ data }),
     onSuccess: invalidate,
   });
 }
