@@ -16,6 +16,12 @@ dist-ssr
 .nitro
 *.local
 
+# SQLite Databases
+*.db
+*.sqlite
+*.sqlite3
+expense_tracker.db
+
 # Wrangler / Cloudflare
 .wrangler/
 .dev.vars
@@ -31,12 +37,15 @@ dist-ssr
 *.sln
 *.sw?
 
+# Environment files
 .env
+.env.*
+!.env.example
 
+# Python
 venv/
-
 .venv/
-
 __pycache__/
-
 *.pyc
+
+.env

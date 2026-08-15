@@ -26,6 +26,7 @@ import {
   type TxType,
 } from "@/lib/spendly-core";
 import { useCreateTransaction, useUpdateTransaction } from "@/hooks/use-spendly";
+import { ApiError } from "@/lib/api";
 
 type Errors = Partial<Record<"type" | "category" | "amount" | "date", string>>;
 
@@ -66,12 +67,21 @@ export function TransactionDialog({
 
   function validate(): Errors {
     const next: Errors = {};
-    if (type !== "income" && type !== "expense") next.type = "Select a transaction type.";
-    if (!category) next.category = "Select a category.";
+    if (!type || (type !== "income" && type !== "expense")) {
+      next.type = "Transaction type is required.";
+    }
+    if (!category || !category.trim()) {
+      next.category = "Category is required.";
+    }
     const parsed = Number(amount);
-    if (!amount.trim()) next.amount = "Enter an amount.";
-    else if (!Number.isFinite(parsed) || parsed <= 0) next.amount = "Amount must be greater than 0.";
-    if (!date) next.date = "Select a date.";
+    if (!amount.trim()) {
+      next.amount = "Amount is required.";
+    } else if (!Number.isFinite(parsed) || parsed <= 0) {
+      next.amount = "Amount must be greater than 0.";
+    }
+    if (!date || !date.trim()) {
+      next.date = "Date is required.";
+    }
     return next;
   }
 
@@ -79,27 +89,38 @@ export function TransactionDialog({
     event.preventDefault();
     const next = validate();
     setErrors(next);
-    if (Object.keys(next).length) return;
+    if (Object.keys(next).length > 0) return;
 
     const payload = {
       type,
-      category,
+      category: category.trim(),
       amount: Math.round(Number(amount) * 100) / 100,
-      date,
+      date: date.trim(),
       description: description.trim() || null,
     };
 
     try {
       if (isEdit && transaction) {
         await update.mutateAsync({ ...payload, id: transaction.id });
-        toast.success("Transaction updated successfully.");
+        toast.success("Transaction updated successfully!");
       } else {
         await create.mutateAsync(payload);
-        toast.success("Transaction added successfully.");
+        toast.success(
+          `${type === "income" ? "Income" : "Expense"} transaction added successfully!`
+        );
       }
       onOpenChange(false);
-    } catch {
-      toast.error("Something went wrong. Please try again.");
+    } catch (err: unknown) {
+      if (err instanceof ApiError) {
+        if (err.fields) {
+          setErrors(err.fields as Errors);
+        }
+        toast.error(err.message || "Failed to save transaction.");
+      } else if (err instanceof Error) {
+        toast.error(err.message || "Something went wrong. Please try again.");
+      } else {
+        toast.error("An unexpected error occurred.");
+      }
     }
   }
 
@@ -109,14 +130,23 @@ export function TransactionDialog({
         <DialogHeader>
           <DialogTitle>{isEdit ? "Edit Transaction" : "Add Transaction"}</DialogTitle>
           <DialogDescription>
-            {isEdit ? "Update the details of this entry." : "Record a new income or expense."}
+            {isEdit
+              ? "Update the details of this entry in your financial tracker."
+              : "Record a new income or expense in your financial tracker."}
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={onSubmit} className="grid gap-4" noValidate>
           <div className="grid gap-2">
-            <Label htmlFor="tx-type">Transaction type</Label>
-            <div className="grid grid-cols-2 gap-2" id="tx-type" role="group" aria-label="Transaction type">
+            <Label htmlFor="tx-type" className="font-semibold">
+              Transaction type <span className="text-destructive">*</span>
+            </Label>
+            <div
+              className="grid grid-cols-2 gap-2"
+              id="tx-type"
+              role="group"
+              aria-label="Transaction type"
+            >
               {(["expense", "income"] as const).map((option) => (
                 <button
                   key={option}
@@ -125,25 +155,39 @@ export function TransactionDialog({
                   onClick={() => {
                     setType(option);
                     setCategory("");
+                    if (errors.type) {
+                      setErrors((prev) => ({ ...prev, type: undefined }));
+                    }
                   }}
-                  className={`rounded-lg border px-3 py-2 text-sm font-medium capitalize transition-colors ${
+                  className={`rounded-lg border px-3 py-2.5 text-sm font-medium capitalize transition-all ${
                     type === option
                       ? option === "income"
-                        ? "border-income bg-income/10 text-income"
-                        : "border-expense bg-expense/10 text-expense"
+                        ? "border-income bg-income/10 text-income font-semibold shadow-sm"
+                        : "border-expense bg-expense/10 text-expense font-semibold shadow-sm"
                       : "border-border bg-card text-muted-foreground hover:bg-muted"
                   }`}
                 >
-                  {option}
+                  {option === "income" ? "+ Income" : "− Expense"}
                 </button>
               ))}
             </div>
+            {errors.type ? <p className="text-xs font-medium text-destructive">{errors.type}</p> : null}
           </div>
 
           <div className="grid gap-2 sm:grid-cols-2">
             <div className="grid gap-2">
-              <Label htmlFor="tx-category">Category</Label>
-              <Select value={category} onValueChange={setCategory}>
+              <Label htmlFor="tx-category" className="font-semibold">
+                Category <span className="text-destructive">*</span>
+              </Label>
+              <Select
+                value={category}
+                onValueChange={(val) => {
+                  setCategory(val);
+                  if (errors.category) {
+                    setErrors((prev) => ({ ...prev, category: undefined }));
+                  }
+                }}
+              >
                 <SelectTrigger id="tx-category" aria-invalid={Boolean(errors.category)}>
                   <SelectValue placeholder="Select category" />
                 </SelectTrigger>
@@ -155,45 +199,67 @@ export function TransactionDialog({
                   ))}
                 </SelectContent>
               </Select>
-              {errors.category ? <p className="text-xs text-destructive">{errors.category}</p> : null}
+              {errors.category ? (
+                <p className="text-xs font-medium text-destructive">{errors.category}</p>
+              ) : null}
             </div>
 
             <div className="grid gap-2">
-              <Label htmlFor="tx-amount">Amount (₹)</Label>
+              <Label htmlFor="tx-amount" className="font-semibold">
+                Amount (₹) <span className="text-destructive">*</span>
+              </Label>
               <Input
                 id="tx-amount"
                 inputMode="decimal"
                 type="number"
                 step="0.01"
-                min="0"
+                min="0.01"
                 placeholder="0.00"
                 value={amount}
-                onChange={(e) => setAmount(e.target.value)}
+                onChange={(e) => {
+                  setAmount(e.target.value);
+                  if (errors.amount) {
+                    setErrors((prev) => ({ ...prev, amount: undefined }));
+                  }
+                }}
                 aria-invalid={Boolean(errors.amount)}
               />
-              {errors.amount ? <p className="text-xs text-destructive">{errors.amount}</p> : null}
+              {errors.amount ? (
+                <p className="text-xs font-medium text-destructive">{errors.amount}</p>
+              ) : null}
             </div>
           </div>
 
           <div className="grid gap-2">
-            <Label htmlFor="tx-date">Date</Label>
+            <Label htmlFor="tx-date" className="font-semibold">
+              Date <span className="text-destructive">*</span>
+            </Label>
             <Input
               id="tx-date"
               type="date"
               value={date}
-              onChange={(e) => setDate(e.target.value)}
+              onChange={(e) => {
+                setDate(e.target.value);
+                if (errors.date) {
+                  setErrors((prev) => ({ ...prev, date: undefined }));
+                }
+              }}
               aria-invalid={Boolean(errors.date)}
             />
-            {errors.date ? <p className="text-xs text-destructive">{errors.date}</p> : null}
+            {errors.date ? (
+              <p className="text-xs font-medium text-destructive">{errors.date}</p>
+            ) : null}
           </div>
 
           <div className="grid gap-2">
-            <Label htmlFor="tx-description">Description (optional)</Label>
+            <Label htmlFor="tx-description" className="font-semibold">
+              Description (optional)
+            </Label>
             <Textarea
               id="tx-description"
               rows={2}
               maxLength={200}
-              placeholder="e.g. Groceries at the weekend market"
+              placeholder="e.g. Monthly salary, Grocery shopping, Coffee with friends"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
             />

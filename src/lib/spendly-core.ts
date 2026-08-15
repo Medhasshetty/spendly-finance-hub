@@ -41,7 +41,7 @@ export const INCOME_CATEGORIES = [
   "Other",
 ] as const;
 
-/** Chart palette: premium violet + emerald + amber + rose complements. */
+/** Chart palette: premium emerald + violet + amber + rose complements. */
 export const CATEGORY_COLORS: Record<string, string> = {
   Food: "#10B981",
   Travel: "#8B5CF6",
@@ -78,24 +78,32 @@ export type Analytics = {
 };
 
 /** Money is summed as integer paise to avoid float drift. */
-export const toPaise = (rupees: number) => Math.round(rupees * 100);
-export const toRupees = (paise: number) => paise / 100;
+export const toPaise = (rupees: number) => Math.round(Number(rupees || 0) * 100);
+export const toRupees = (paise: number) => (paise || 0) / 100;
 
-export function formatINR(value: number, opts: { signed?: boolean; compact?: boolean } = {}) {
+export function formatINR(
+  value: number | string | undefined | null,
+  opts: { signed?: boolean; compact?: boolean } = {}
+) {
+  const num = typeof value === "number" ? value : Number(value);
+  const safeVal = Number.isFinite(num) ? num : 0;
   const formatted = new Intl.NumberFormat("en-IN", {
     style: "currency",
     currency: "INR",
     maximumFractionDigits: opts.compact ? 0 : 2,
     minimumFractionDigits: 0,
     notation: opts.compact ? "compact" : "standard",
-  }).format(Math.abs(value));
+  }).format(Math.abs(safeVal));
   if (!opts.signed) return formatted;
-  return `${value < 0 ? "−" : "+"}${formatted}`;
+  return `${safeVal < 0 ? "−" : safeVal > 0 ? "+" : ""}${formatted}`;
 }
 
 export function formatDate(iso: string) {
+  if (!iso) return "—";
   const d = new Date(`${iso}T00:00:00`);
-  return d.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
+  return isNaN(d.getTime())
+    ? iso
+    : d.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
 }
 
 export function rangeBounds(range: RangeKey, today = new Date()): { from: string | null; to: string | null } {
@@ -121,13 +129,13 @@ export function rangeBounds(range: RangeKey, today = new Date()): { from: string
 export function computeSummary(rows: Transaction[]): Summary {
   let incomeP = 0;
   let expenseP = 0;
-  for (const row of rows) {
+  for (const row of rows || []) {
     const paise = toPaise(Number(row.amount));
     if (row.type === "income") incomeP += paise;
-    else expenseP += paise;
+    else if (row.type === "expense") expenseP += paise;
   }
   const balanceP = incomeP - expenseP;
-  const savingsRate = incomeP > 0 ? Math.round((balanceP / incomeP) * 1000) / 10 : 0;
+  const savingsRate = incomeP > 0 ? Math.max(0, Math.round((balanceP / incomeP) * 1000) / 10) : 0;
   return {
     income: toRupees(incomeP),
     expenses: toRupees(expenseP),
@@ -141,12 +149,13 @@ export function computeAnalytics(rows: Transaction[]): Analytics {
   const summary = computeSummary(rows);
 
   const monthlyMap = new Map<string, { income: number; expenses: number }>();
-  for (const row of rows) {
+  for (const row of rows || []) {
+    if (!row.date) continue;
     const key = row.date.slice(0, 7);
     const bucket = monthlyMap.get(key) ?? { income: 0, expenses: 0 };
     const paise = toPaise(Number(row.amount));
     if (row.type === "income") bucket.income += paise;
-    else bucket.expenses += paise;
+    else if (row.type === "expense") bucket.expenses += paise;
     monthlyMap.set(key, bucket);
   }
   const monthly: MonthlyPoint[] = [...monthlyMap.entries()]
@@ -159,7 +168,7 @@ export function computeAnalytics(rows: Transaction[]): Analytics {
 
   const bucketBy = (type: TxType): CategorySlice[] => {
     const map = new Map<string, { total: number; count: number }>();
-    for (const row of rows) {
+    for (const row of rows || []) {
       if (row.type !== type) continue;
       const cur = map.get(row.category) ?? { total: 0, count: 0 };
       cur.total += toPaise(Number(row.amount));

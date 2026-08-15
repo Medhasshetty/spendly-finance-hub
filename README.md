@@ -1466,25 +1466,37 @@ Before completion verify:
 
 ✓ UI is minimal, premium, and professional
 
-Build the application fully rather than creating only a visual mockup. THE FINAL PRODUCT MUST BE IMMEDIATELY DEPLOYABLE.LOGO IS ATTACHED USE THAT
+Build the application fully rather than creating only a visual mockup. THE FINAL PRODUCT MUST BE IMMEDIATELY DEPLOYABLE.
 
-This project was built with [Lovable](https://lovable.dev).
+## Architecture & Technology Stack
 
-## Build with Lovable
+- **Frontend**: React 19, TypeScript, Vite, Tailwind CSS v4, Radix UI, Bootstrap 5 utilities
+- **Backend**: Python 3.11+, Flask 3.1 REST API, Flask-CORS
+- **Database**: SQLite3 (`expense_tracker.db`)
 
-Continue developing this project in the [Lovable editor](https://lovable.dev/projects/b57054d1-c935-4734-b5e6-542aca8efd6d).
+## Local Development & Setup
 
-- **Ship faster**: describe what you want to build and Lovable handles the code.
-- **Stay in sync**: every change made in Lovable is committed straight to this repository.
-- **Full ownership**: this code is yours. Push to `main` on GitHub and your changes sync back into Lovable, ready for your next prompt.
-
-## Development
-
-Prefer working locally? You need Node.js and npm — [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating).
-
+### 1. Start the Flask Backend
 ```sh
-git clone <this-repository-url>
-cd <repository-name>
-npm i
+# Install Python dependencies
+pip install -r flask_app/requirements.txt
+
+# Run Flask REST API
+python flask_app/app.py
+```
+*The Flask REST API will start at `http://127.0.0.1:5000` and automatically initialize the SQLite database.*
+
+### 2. Start the React Frontend
+```sh
+# Install Node dependencies
+npm install
+
+# Start Vite dev server
 npm run dev
 ```
+
+### 3. Run Automated Tests
+```sh
+python test_flask_api.py
+```
+

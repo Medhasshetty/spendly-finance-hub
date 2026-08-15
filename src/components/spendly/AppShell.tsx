@@ -1,5 +1,18 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Bell, LayoutDashboard, ArrowLeftRight, PieChart, Tags, Settings, Menu, Sparkles, Wallet, LogOut, LogIn, Moon, Sun } from "lucide-react";
+import {
+  Bell,
+  LayoutDashboard,
+  ArrowLeftRight,
+  PieChart,
+  Tags,
+  Settings,
+  Menu,
+  Sparkles,
+  Wallet,
+  Moon,
+  Sun,
+  Database,
+} from "lucide-react";
 import type { ReactNode } from "react";
 import { useState } from "react";
 import { Logo, LogoMark } from "./Logo";
@@ -54,7 +67,12 @@ function SidebarBody({ onNavigate }: { onNavigate?: (() => void) | undefined }) 
       />
 
       <div className="relative">
-        <Link to="/" onClick={onNavigate} className="mb-8 flex items-center gap-3 px-2" aria-label="Spendly home">
+        <Link
+          to="/"
+          onClick={onNavigate}
+          className="mb-8 flex items-center gap-3 px-2"
+          aria-label="Spendly home"
+        >
           <span className="relative shadow-lg shadow-black/10">
             <Logo className="h-8" />
             <span className="absolute -right-1.5 -top-1.5 grid h-4 w-4 place-items-center rounded-full bg-gradient-to-br from-amber-400 to-orange-500 ring-2 ring-sidebar shadow-md">
@@ -67,26 +85,37 @@ function SidebarBody({ onNavigate }: { onNavigate?: (() => void) | undefined }) 
 
       <div className="relative mt-auto space-y-3">
         <div className="relative overflow-hidden rounded-2xl border border-sidebar-border bg-white/[0.04] p-4 backdrop-blur-sm">
-          <div aria-hidden="true" className="absolute -right-8 -top-8 h-24 w-24 rounded-full bg-gradient-to-br from-sidebar-primary/30 to-violet-500/20 blur-2xl" />
+          <div
+            aria-hidden="true"
+            className="absolute -right-8 -top-8 h-24 w-24 rounded-full bg-gradient-to-br from-sidebar-primary/30 to-violet-500/20 blur-2xl"
+          />
           <div className="relative flex items-start gap-3">
             <div className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-sidebar-primary to-violet-500 text-white shadow-lg shadow-sidebar-primary/25">
               <Wallet className="h-[18px] w-[18px]" strokeWidth={1.85} />
             </div>
             <div className="min-w-0 flex-1">
-              <p className="text-[13px] font-semibold leading-tight text-white">Track. Manage. Grow.</p>
+              <p className="text-[13px] font-semibold leading-tight text-white">
+                Track. Manage. Grow.
+              </p>
               <p className="mt-1 text-[11px] leading-snug text-sidebar-foreground/60">
-                Your money, clearly organized.
+                Flask REST API + SQLite
               </p>
             </div>
           </div>
           <div className="relative mt-3.5 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-white/10 text-[11px] font-semibold text-sidebar-foreground/70 ring-1 ring-white/10">
-                {resolvedTheme === "dark" ? <Moon className="h-3.5 w-3.5" /> : <Sun className="h-3.5 w-3.5" />}
+                {resolvedTheme === "dark" ? (
+                  <Moon className="h-3.5 w-3.5" />
+                ) : (
+                  <Sun className="h-3.5 w-3.5" />
+                )}
               </span>
-              <span className="text-[10px] font-medium text-sidebar-foreground/50 capitalize">{resolvedTheme} mode</span>
+              <span className="text-[10px] font-medium text-sidebar-foreground/50 capitalize">
+                {resolvedTheme} mode
+              </span>
             </div>
-            <span className="text-[10px] font-medium text-sidebar-foreground/50">v1.0</span>
+            <span className="text-[10px] font-medium text-sidebar-foreground/50">Spendly v1.0</span>
           </div>
         </div>
       </div>
@@ -96,7 +125,6 @@ function SidebarBody({ onNavigate }: { onNavigate?: (() => void) | undefined }) 
 
 export function AppShell({ children }: { children: ReactNode }) {
   const [open, setOpen] = useState(false);
-  const [signedIn, setSignedIn] = useState(true);
   const title = useRouterState({
     select: (s) => NAV.find((n) => n.to === s.location.pathname)?.label ?? "Spendly",
   });
@@ -116,7 +144,12 @@ export function AppShell({ children }: { children: ReactNode }) {
               <div className="flex min-w-0 items-center gap-3">
                 <Sheet open={open} onOpenChange={setOpen}>
                   <SheetTrigger asChild>
-                    <Button variant="ghost" size="icon" className="lg:hidden hover:bg-muted/80" aria-label="Open navigation">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="lg:hidden hover:bg-muted/80"
+                      aria-label="Open navigation"
+                    >
                       <Menu className="h-5 w-5" strokeWidth={1.85} />
                     </Button>
                   </SheetTrigger>
@@ -132,7 +165,9 @@ export function AppShell({ children }: { children: ReactNode }) {
                 </div>
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">
-                    <h2 className="truncate text-[15px] font-semibold tracking-tight text-foreground">{title}</h2>
+                    <h2 className="truncate text-[15px] font-semibold tracking-tight text-foreground">
+                      {title}
+                    </h2>
                     <span className="hidden h-1.5 w-1.5 rounded-full bg-primary/70 sm:inline-block" />
                   </div>
                   <p className="mt-0.5 hidden truncate text-[11px] text-muted-foreground sm:block">
@@ -146,72 +181,43 @@ export function AppShell({ children }: { children: ReactNode }) {
               </div>
               <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
                 <ThemeToggle size="icon" />
-                <Button variant="ghost" size="icon" aria-label="Notifications" className="relative hover:bg-muted/80">
-                  <Bell className="h-[18px] w-[18px]" strokeWidth={1.85} />
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  aria-label="Database Status"
+                  title="Connected to SQLite"
+                  className="relative hover:bg-muted/80"
+                >
+                  <Database className="h-[18px] w-[18px] text-income" strokeWidth={1.85} />
                   <span className="absolute right-2 top-2 grid h-4 w-4 place-items-center">
-                    <span className="absolute h-2 w-2 animate-ping rounded-full bg-primary/60" />
-                    <span className="relative h-1.5 w-1.5 rounded-full bg-primary" />
+                    <span className="relative h-1.5 w-1.5 rounded-full bg-income" />
                   </span>
                 </Button>
-                {signedIn ? (
-                  <div className="group relative flex items-center gap-2.5 rounded-full border border-border/60 bg-card/80 py-1 pl-1 pr-3.5 shadow-sm transition-all duration-200 hover:border-primary/30 hover:shadow-md hover:shadow-primary/5">
-                    <div className="relative">
-                      <span className="grid h-8 w-8 place-items-center rounded-full bg-gradient-to-br from-primary via-brand to-brand-dark text-xs font-bold text-white shadow-lg shadow-primary/25">
-                        MS
-                      </span>
-                      <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-income ring-2 ring-card" />
-                    </div>
-                    <div className="hidden text-left sm:block">
-                      <span className="block text-[12px] font-semibold leading-tight text-foreground">Medha S.</span>
-                      <span className="block text-[10px] leading-tight text-muted-foreground">Premium plan</span>
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="ml-1 h-8 w-8 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
-                      onClick={() => setSignedIn(false)}
-                      aria-label="Sign out"
-                      title="Sign out"
-                    >
-                      <LogOut className="h-4 w-4" strokeWidth={1.85} />
-                    </Button>
+                <div className="flex items-center gap-2.5 rounded-full border border-border/60 bg-card/80 py-1 pl-1 pr-3.5 shadow-sm transition-all duration-200 hover:border-primary/30">
+                  <div className="relative">
+                    <span className="grid h-8 w-8 place-items-center rounded-full bg-gradient-to-br from-primary via-brand to-brand-dark text-xs font-bold text-white shadow-md shadow-primary/20">
+                      SP
+                    </span>
+                    <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-income ring-2 ring-card" />
                   </div>
-                ) : (
-                  <Button
-                    size="sm"
-                    className="gap-1.5"
-                    onClick={() => setSignedIn(true)}
-                  >
-                    <LogIn className="h-4 w-4" strokeWidth={1.85} />
-                    Sign in
-                  </Button>
-                )}
+                  <div className="hidden text-left sm:block">
+                    <span className="block text-[12px] font-semibold leading-tight text-foreground">
+                      Spendly Hub
+                    </span>
+                    <span className="block text-[10px] leading-tight text-muted-foreground">
+                      SQLite · Local
+                    </span>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
         </header>
 
-        <main className="mx-auto max-w-7xl px-4 pb-28 pt-6 sm:px-8 lg:pb-12 lg:pt-8">{children}</main>
+        <main className="mx-auto max-w-7xl px-4 pb-28 pt-6 sm:px-8 lg:pb-12 lg:pt-8">
+          {children}
+        </main>
       </div>
-
-      <nav
-        aria-label="Main mobile"
-        className="fixed inset-x-0 bottom-0 z-30 mx-auto mb-3 max-w-md px-3 lg:hidden"
-      >
-        <div className="grid grid-cols-5 gap-1 rounded-3xl border border-border/80 bg-card/95 px-2 py-2 shadow-2xl shadow-navy/10 backdrop-blur-2xl">
-          {NAV.map((item) => (
-            <Link
-              key={item.to}
-              to={item.to}
-              activeOptions={{ exact: item.to === "/" }}
-              className="relative flex flex-col items-center gap-0.5 rounded-2xl py-2 text-[10px] font-medium text-muted-foreground transition-all duration-200 data-[status=active]:bg-gradient-to-b data-[status=active]:from-primary/10 data-[status=active]:to-transparent data-[status=active]:text-primary"
-            >
-              <item.icon className="h-[20px] w-[20px]" strokeWidth={1.85} />
-              {item.label}
-            </Link>
-          ))}
-        </div>
-      </nav>
     </div>
   );
 }
@@ -226,22 +232,12 @@ export function PageHeader({
   action?: ReactNode;
 }) {
   return (
-    <div className="animate-slide-up mb-6 grid gap-5 sm:mb-8 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
-      <div className="min-w-0">
-        <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-3 py-1">
-          <span className="h-1.5 w-1.5 rounded-full bg-gradient-to-r from-primary to-violet-500" />
-          <span className="text-[11px] font-semibold uppercase tracking-wider text-primary">
-            {subtitle.split(" ")[0]} view
-          </span>
-        </div>
-        <h1 className="text-[28px] font-bold tracking-tight text-foreground sm:text-[34px]">
-          <span className="bg-gradient-to-r from-foreground via-foreground to-muted-foreground/70 bg-clip-text text-transparent">
-            {title}
-          </span>
-        </h1>
-        <p className="mt-1.5 text-sm text-muted-foreground sm:text-[15px]">{subtitle}</p>
+    <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div>
+        <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">{title}</h1>
+        <p className="mt-1 text-sm text-muted-foreground">{subtitle}</p>
       </div>
-      {action ? <div className="shrink-0 sm:self-end">{action}</div> : null}
+      {action && <div className="shrink-0">{action}</div>}
     </div>
   );
 }

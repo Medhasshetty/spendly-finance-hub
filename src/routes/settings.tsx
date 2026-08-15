@@ -25,8 +25,6 @@ import {
   Eye,
   CreditCard,
   HelpCircle,
-  LogOut,
-  LogIn,
   FileText,
 } from "lucide-react";
 import { AppShell, PageHeader } from "@/components/spendly/AppShell";
@@ -65,7 +63,6 @@ function SettingsPage() {
   const [twoFactor, setTwoFactor] = useState(false);
   const [biometric, setBiometric] = useState(true);
   const [saved, setSaved] = useState<Record<string, boolean>>({});
-  const [signedIn, setSignedIn] = useState(true);
   const [importFileName, setImportFileName] = useState<string | null>(null);
   const [avatarFileName, setAvatarFileName] = useState<string | null>(null);
   const [accentIndex, setAccentIndex] = useState(1);
@@ -552,36 +549,19 @@ function SettingsPage() {
               <Separator />
 
               <div>
-                <Label className="text-sm font-medium text-foreground">Active sessions</Label>
-                <p className="mt-1 text-xs text-muted-foreground">Manage the devices currently signed in to your account.</p>
+                <Label className="text-sm font-medium text-foreground">Database & Local Storage</Label>
+                <p className="mt-1 text-xs text-muted-foreground">Local SQLite storage details for your Spendly instance.</p>
                 <div className="mt-3 space-y-2">
-                  {[
-                    { device: "Windows PC · Chrome", location: "Bengaluru, India", current: true, time: "Active now" },
-                    { device: "iPhone 15 Pro · Safari", location: "Bengaluru, India", current: false, time: "2 hours ago" },
-                    { device: "iPad Pro · Spendly App", location: "Bengaluru, India", current: false, time: "3 days ago" },
-                  ].map((s, i) => (
-                    <div key={i} className="flex items-center justify-between rounded-2xl border border-border/60 p-4">
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <p className="text-sm font-medium text-foreground">{s.device}</p>
-                          {s.current && (
-                            <Badge variant="outline" className="border-primary/30 bg-primary/10 text-primary">This device</Badge>
-                          )}
-                        </div>
-                        <p className="mt-0.5 text-xs text-muted-foreground">{s.location} · {s.time}</p>
+                  <div className="flex items-center justify-between rounded-2xl border border-border/60 p-4">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm font-medium text-foreground">SQLite Database (expense_tracker.db)</p>
+                        <Badge variant="outline" className="border-primary/30 bg-primary/10 text-primary">Active</Badge>
                       </div>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className={s.current ? "text-muted-foreground" : "text-destructive hover:bg-destructive/10 hover:text-destructive"}
-                        disabled={s.current}
-                        onClick={() => !s.current && toast.message("Session signed out")}
-                      >
-                        {s.current ? "Current" : "Sign out"}
-                      </Button>
+                      <p className="mt-0.5 text-xs text-muted-foreground">Flask REST Backend · Port 5000</p>
                     </div>
-                  ))}
+                    <Badge variant="outline" className="border-income/30 bg-income/10 text-income">Connected</Badge>
+                  </div>
                 </div>
               </div>
             </CardContent>
@@ -597,7 +577,7 @@ function SettingsPage() {
                 </div>
                 Your data
               </CardTitle>
-              <CardDescription>Export, import or clear your financial records.</CardDescription>
+              <CardDescription>Export, import or manage your financial records.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <input ref={importInputRef} type="file" accept=".csv,.json" className="hidden" onChange={handleImportChange} />
@@ -609,19 +589,47 @@ function SettingsPage() {
                     </div>
                     <div className="flex-1">
                       <p className="text-sm font-semibold text-foreground">Export all data</p>
-                      <p className="text-xs text-muted-foreground">Download CSV or JSON backup</p>
+                      <p className="text-xs text-muted-foreground">Download CSV backup of your SQLite records</p>
                     </div>
                   </div>
                   <Button
                     type="button"
                     variant="outline"
                     className="mt-4 justify-start gap-2 border-primary/20 text-primary hover:bg-primary/10 hover:text-primary"
-                    onClick={() =>
-                      toast.success("Export started", {
-                        description: "Your Spendly data is being prepared for download.",
-                        action: { label: "Open", onClick: () => toast.message("Opened download") },
-                      })
-                    }
+                    onClick={async () => {
+                      try {
+                        const { spendlyApi } = await import("@/lib/api");
+                        const txs = await spendlyApi.getTransactions();
+                        if (txs.length === 0) {
+                          toast.info("No transactions to export yet.");
+                          return;
+                        }
+                        const headers = ["ID", "Type", "Category", "Amount", "Date", "Description"];
+                        const csvRows = [
+                          headers.join(","),
+                          ...txs.map((t) =>
+                            [
+                              t.id,
+                              t.type,
+                              `"${t.category}"`,
+                              t.amount,
+                              t.date,
+                              `"${(t.description || "").replace(/"/g, '""')}"`,
+                            ].join(",")
+                          ),
+                        ];
+                        const blob = new Blob([csvRows.join("\n")], { type: "text/csv;charset=utf-8;" });
+                        const url = URL.createObjectURL(blob);
+                        const link = document.createElement("a");
+                        link.href = url;
+                        link.download = `spendly_transactions_${new Date().toISOString().slice(0, 10)}.csv`;
+                        link.click();
+                        URL.revokeObjectURL(url);
+                        toast.success("Transactions exported successfully!");
+                      } catch {
+                        toast.error("Failed to export transactions.");
+                      }
+                    }}
                   >
                     <Download className="h-4 w-4" /> Download (.csv)
                   </Button>
@@ -648,8 +656,8 @@ function SettingsPage() {
                       disabled={!importFileName}
                       onClick={() =>
                         importFileName &&
-                        toast.success("Import complete!", {
-                          description: `Transactions from "${importFileName}" are now in Spendly.`,
+                        toast.success("Import processed", {
+                          description: `Read transactions from "${importFileName}".`,
                         })
                       }
                     >
@@ -663,36 +671,6 @@ function SettingsPage() {
                   )}
                 </div>
               </div>
-
-              <Separator />
-
-              <div className="rounded-2xl border border-destructive/30 bg-destructive/[0.04] p-5">
-                <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                  <div className="flex items-start gap-3">
-                    <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-destructive/15 text-destructive">
-                      <Trash2 className="h-5 w-5" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-semibold text-foreground">Clear all data</p>
-                      <p className="mt-1 text-xs text-muted-foreground">
-                        Permanently delete all your transactions, categories and analytics data. This cannot be undone.
-                      </p>
-                    </div>
-                  </div>
-                  <Button
-                    type="button"
-                    variant="destructive"
-                    className="sm:shrink-0"
-                    onClick={() =>
-                      toast.error("Data cleared", {
-                        description: "All Spendly records have been wiped from this device.",
-                      })
-                    }
-                  >
-                    <Trash2 className="h-4 w-4" /> Clear everything
-                  </Button>
-                </div>
-              </div>
             </CardContent>
           </Card>
 
@@ -700,18 +678,18 @@ function SettingsPage() {
             <CardHeader className="pb-4">
               <CardTitle className="flex items-center gap-2 text-lg">
                 <HelpCircle className="h-5 w-5 text-muted-foreground" />
-                Account
+                About & Help
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              <div className="flex items-center justify-between rounded-2xl p-4 transition-colors hover:bg-muted/40 cursor-pointer" onClick={() => toast.message("Opening Help & Support")}>
+              <div className="flex items-center justify-between rounded-2xl p-4 transition-colors hover:bg-muted/40 cursor-pointer" onClick={() => toast.message("Spendly Help", { description: "Add transactions via the + button or shortcut." })}>
                 <div>
                   <p className="text-sm font-medium text-foreground">Help & support</p>
-                  <p className="text-xs text-muted-foreground">Get answers from the Spendly community.</p>
+                  <p className="text-xs text-muted-foreground">Personal Finance Tracker documentation.</p>
                 </div>
                 <ChevronRight className="h-4 w-4 text-muted-foreground" />
               </div>
-              <div className="flex items-center justify-between rounded-2xl p-4 transition-colors hover:bg-muted/40 cursor-pointer" onClick={() => toast.message("Keyboard shortcuts: Ctrl+K to search, Ctrl+N new transaction")}>
+              <div className="flex items-center justify-between rounded-2xl p-4 transition-colors hover:bg-muted/40 cursor-pointer" onClick={() => toast.message("Keyboard shortcuts: Ctrl+K to search, Alt+N new transaction")}>
                 <div>
                   <p className="text-sm font-medium text-foreground">Keyboard shortcuts</p>
                   <p className="text-xs text-muted-foreground">Speed up your workflow.</p>
@@ -719,44 +697,8 @@ function SettingsPage() {
                 <ChevronRight className="h-4 w-4 text-muted-foreground" />
               </div>
               <Separator />
-              {signedIn ? (
-                <div className="flex items-center justify-between rounded-2xl p-4 transition-colors hover:bg-destructive/5">
-                  <div>
-                    <p className="text-sm font-medium text-destructive">Sign out of Spendly</p>
-                    <p className="text-xs text-muted-foreground">You'll need to sign back in next time.</p>
-                  </div>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    className="gap-1 text-destructive hover:bg-destructive/10 hover:text-destructive"
-                    onClick={() => {
-                      setSignedIn(false);
-                      toast.message("Signed out of Spendly", { description: "See you again soon." });
-                    }}
-                  >
-                    <LogOut className="h-4 w-4" /> Sign out
-                  </Button>
-                </div>
-              ) : (
-                <div className="flex items-center justify-between rounded-2xl p-4 transition-colors hover:bg-primary/5">
-                  <div>
-                    <p className="text-sm font-medium text-primary">Sign in to Spendly</p>
-                    <p className="text-xs text-muted-foreground">Sync your data across all devices.</p>
-                  </div>
-                  <Button
-                    type="button"
-                    className="gap-1"
-                    onClick={() => {
-                      setSignedIn(true);
-                      toast.success("Welcome back!", { description: "You're signed in as Medha S." });
-                    }}
-                  >
-                    <LogIn className="h-4 w-4" /> Sign in
-                  </Button>
-                </div>
-              )}
               <p className="pt-2 text-center text-[11px] text-muted-foreground">
-                Spendly v1.0.0 · Made with care for your finances · {resolvedTheme === "dark" ? "🌙 Dark mode" : "☀️ Light mode"}
+                Spendly Finance Hub v1.0.0 · Python Flask & SQLite · {resolvedTheme === "dark" ? "🌙 Dark mode" : "☀️ Light mode"}
               </p>
             </CardContent>
           </Card>
